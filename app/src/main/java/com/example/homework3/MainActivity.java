@@ -1,19 +1,27 @@
 package com.example.homework3;
 
+import android.animation.AnimatorSet;
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
+import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.ViewTreeObserver;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
-    static final public String SENSOR_TYPE = "sensorType";
     static public SensorManager mSensorManager;
-    static Sensor sensorLight; //zamiast SensorList
+    static Sensor sensorLight;
 
     static String[] listOfComments = new String[] {
             "It is certain.", "It is decidedly so.", "Without a doubt.", "Yes - definitely.",
@@ -24,28 +32,47 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private long lastUpdate = -1;
     private TextView answerBall;
-    private long answerNumber = -1;
+    private ImageView imageBall;
+    private int answerNumber = -1;
+    private long tempanswerNumber = -1;
     private long[] arrayOfTime = new long[10000000];
     private int counter = 0;
     private int tempCounter = 0;
+    private ConstraintLayout mainContainer;
+    private Animation shake;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+         shake = AnimationUtils.loadAnimation(this, R.anim.vibration);
+        imageBall = findViewById(R.id.imageView);
         answerBall = findViewById(R.id.answer);
-
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        imageBall.setImageResource(R.drawable.hw3ball_front);
+        answerBall.setText(" ");
 
-        if (mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT) != null) { // Success!.
+        if (mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT) != null) {
             sensorLight = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
         } else {
             System.out.println("No light sensor.");
         }
-//        @Override
-//        public void onGlobalLayout(){
-//        }
+
+        mainContainer = findViewById(R.id.sensor_container);
+        mainContainer.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                if (answerNumber > 0) {
+                    imageBall.setImageResource(R.drawable.hw3ball_empty);
+
+                }
+                if (counter != 0){
+                    imageBall.setImageResource(R.drawable.hw3ball_front);
+                    answerBall.setText(" ");
+                }
+            }
+        });
     }
 
 
@@ -59,26 +86,25 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         for (int i = 0; i < event.values.length; i++) {
             if (event.values[i] == 0) {
-
-               arrayOfTime[counter] = lastUpdate;
+                arrayOfTime[counter] = lastUpdate;
                 tempCounter = counter;
                 counter++;
+                findViewById(R.id.imageView).startAnimation(shake);
             } else {
                 counter = 0;
-                answerNumber = ((arrayOfTime[tempCounter] - arrayOfTime[0])/1000) % 21 ;
+                tempanswerNumber = (arrayOfTime[tempCounter] - arrayOfTime[0])/1000;
+                answerNumber = (int)(tempanswerNumber % 20);
             }
         }
 
-      //  if (counter == 0 && tempCounter == 0) to jest poczatkowa sytuacja, tu moze byc rysnek kuli z '8'
-        if (answerNumber > 0) {
-            answerBall.setText(listOfComments[(int)answerNumber]);
+        if (tempanswerNumber > 0) {
+            answerBall.setText(listOfComments[answerNumber]);
         }
 
     }
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
     }
 
     @Override
@@ -100,15 +126,4 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
 
- //   private void handleLightSensor() {
-//        if (!animFlag && (sensorValue < 100)) {
-//            animFlag = true;
-//            moonImgView.setAlpha(0f);
-//            sunImgView.setAlpha(1f);
-//            lightSensorAnimation(true);
-//        } else if (animFlag && (sensorType == Sensor.TYPE_LIGHT && sensorValue >= 100)) {
-//            animFlag = false;
-//            lightSensorAnimation(false);
-//        }
-//    }
 }
