@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Homework3</string>
+    <!--<drawable name="drawables">-->
+        <!--<item>@drawable/hwb3ball_empty/item>-->
+        <!--<item>@drawable/hw3ball_front</item>-->
+    <!--</drawable>-->
 </resources>
